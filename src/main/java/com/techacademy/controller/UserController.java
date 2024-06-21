@@ -4,8 +4,8 @@ import java.util.Set;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult; // 追加
-import org.springframework.validation.annotation.Validated; // 追加
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,58 +28,104 @@ public class UserController {
     /** 一覧画面を表示 */
     @GetMapping("/list")
     public String getList(Model model) {
-        // 全件検索結果をModelに登録
         model.addAttribute("userlist", service.getUserList());
-        // user/list.htmlに画面遷移
         return "user/list";
     }
 
     /** User登録画面を表示 */
     @GetMapping("/register")
     public String getRegister(@ModelAttribute User user) {
-        // User登録画面に遷移
         return "user/register";
     }
 
-    // ----- 変更ここから -----
     /** User登録処理 */
     @PostMapping("/register")
     public String postRegister(@Validated User user, BindingResult res, Model model) {
-        if(res.hasErrors()) {
-            // エラーあり
+        if (res.hasErrors()) {
             return getRegister(user);
         }
-        // User登録
         service.saveUser(user);
-        // 一覧画面にリダイレクト
         return "redirect:/user/list";
     }
-    // ----- 変更ここまで -----
+
+
+
+
+
+
+
+
 
     /** User更新画面を表示 */
     @GetMapping("/update/{id}/")
-    public String getUser(@PathVariable("id") Integer id, Model model) {
-        // Modelに登録
-        model.addAttribute("user", service.getUser(id));
-        // User更新画面に遷移
+    public String getUser(@PathVariable(value = "id", required = false) Integer id, Model model) {
+
+        //一覧画面から「更新」ボタン押した時は
+    	//URLに含まれているidを使ってデータベースからユーザー情報を取得して、更新画面に表示するので
+
+    	//if文でidがある場合は「service.getUser(id)」で、そのidに対応するユーザー情報をデータベースから取得する。
+    	//その取得したユーザー情報を引数にしてaddAttributeメソッドを実行。　モデルに登録することでビューで使えるようにしておく。
+        if (id != null) {
+            model.addAttribute("user", service.getUser(id));
+
+            //postUser()から遷移したとき（IDがない場合）、つまりフォームにエラーがあって、入力データを保持したまま更新画面に戻す場合
+            //model.getAttribute("user")で、モデルから"user"というキーで保持しているユーザー情報を取り出す。
+
+            //それ引数にしてaddAttributeメソッドを実行。つまり取り出したユーザー情報をもう一回modelに登録するということ。
+            //モデルに登録することでビューで使えるようにしておく。
+            //これで、エラーメッセージと共にユーザーが入力したデータが保持されて更新画面に戻る
+        } else {
+            model.addAttribute("user", model.getAttribute("user"));
+        }
+
+        //処理の最後にどっちの場合でも共通で、user/updateというビュー（テンプレート）を表示する
         return "user/update";
     }
 
+
+
     /** User更新処理 */
+    //POSTリクエストが飛んできたときに呼び出されるメソッド
+    //フォームから送信されたユーザー情報を受け取って更新処理を行う
     @PostMapping("/update/{id}/")
-    public String postUser(User user) {
-        // User登録
+
+    //【postUserメソッドの引数の説明まとめ】
+    //@Validated User user: フォームから送信されたユーザー情報をバリデーションする。
+    //BindingResult res: バリデーションの結果を格納するオブジェクト。
+    //@PathVariable("id") Integer id: URLパスからユーザーIDを取得する。
+    //Model model: ビューにデータを渡すためのオブジェクト。
+    public String postUser(@Validated User user, BindingResult res, @PathVariable("id") Integer id, Model model) {
+
+    	//「res.hasErrors()がtrue」＝ バリデーションエラーがあったということなので
+    	//model.addAttribute("user", user)で、 フォームから送信されたユーザー情報（エラー含む）をモデルに登録する。
+    	//戻り値として、
+        if (res.hasErrors()) {
+            model.addAttribute("user", user);
+            return getUser(null, model);
+        }
+
+        //入力されたuserオブジェクトに、URLから取得したIDを設定する。これで、どのユーザーを更新するかが明確になる
+        user.setId(id);
+
+        //service.saveUser(user);を呼び出して、ユーザーの情報をデータベースに保存する。これで、入力された値がデータベースに反映される
         service.saveUser(user);
-        // 一覧画面にリダイレクト
+
+        //最後に、return "redirect:/user/list";で、ユーザーの一覧画面にリダイレクトする
         return "redirect:/user/list";
     }
+
+
+
+
+
+
+
+
 
     /** User削除処理 */
     @PostMapping(path="list", params="deleteRun")
     public String deleteRun(@RequestParam(name="idck") Set<Integer> idck, Model model) {
-        // Userを一括削除
         service.deleteUser(idck);
-        // 一覧画面にリダイレクト
         return "redirect:/user/list";
     }
 }

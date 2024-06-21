@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -38,8 +39,8 @@ public class User {
 
     /** 名前。20桁。null不許可 */
     @Column(length = 20, nullable = false)
-    @NotEmpty
     @Length(max=20)
+    @NotBlank(message = "値を入力してください。")
     private String name;
 
     /** 性別。2桁。列挙型（文字列） */
@@ -50,13 +51,15 @@ public class User {
 
     /** 年齢 */
     @Min(0)
-    @Max(120)
+    @Max(value = 120, message = "120以下の値にしてください")
     private Integer age;
 
-    /** メールアドレス。50桁。null許可 */
+    /** メールアドレス。50桁。null許可しない */
     @Column(length = 50)
-    @Email
+    @Email(message = "メールアドレスを入力して下さい。")
     @Length(max=50)
+    @NotBlank(message = "メールアドレスを入力して下さい。")
+
     private String email;
 
     // ----- 追加ここから -----
