@@ -24,6 +24,15 @@ public class UserController {
     public UserController(UserService service) {
         this.service = service;
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /** 一覧画面を表示 */
     @GetMapping("/list")
@@ -31,6 +40,15 @@ public class UserController {
         model.addAttribute("userlist", service.getUserList());
         return "user/list";
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /** User登録画面を表示 */
     @GetMapping("/register")
